@@ -1,0 +1,45 @@
+# Update Log - Agus Simulator Version 2.0
+
+## **Novedades y Mejoras**
+1. **Título de la ventana actualizado**:
+   - El título de la ventana ahora incluye la versión: `"Agus Simulator - Version 2.0"`.
+
+2. **Sonido de estrés**:
+   - Se añadió un sonido (`stress.mp3`) que se reproduce cada 10 segundos durante el juego para aumentar la intensidad.
+   - El sonido se detiene automáticamente al alcanzar un final (victoria o pacífico).
+
+3. **Tips en el menú inicial**:
+   - Se añadieron tips rotativos en el menú inicial que cambian cada 5 segundos.
+   - Ejemplos de tips:
+     - "Usa W, A, S, D para moverte."
+     - "¿Cuánto tiempo puedes aguantar?"
+     - "Atrapa emojis para crecer."
+     - "Evita quedarte sin atrapar emojis por 30 segundos."
+     - "¡Diviértete jugando Agus Simulator!"
+
+4. **Final normal mejorado**:
+   - El texto del final normal ahora tiene un contorno negro para que sea visible sobre el fondo claro del GIF.
+
+5. **Fondo restaurado**:
+   - El fondo del juego se mantiene gris (`(160, 160, 160)`) para una experiencia visual consistente.
+
+6. **Música de fondo dinámica**:
+   - La música de fondo se mantiene constante, pero se detiene automáticamente al alcanzar un final.
+
+## **Correcciones**
+- Se corrigieron problemas con eventos de teclado que se propagaban entre el menú y el juego.
+- Se eliminó la superposición de sonidos durante los finales.
+
+## **Instrucciones**
+- **Movimiento**: Usa las teclas `W`, `A`, `S`, `D` para mover al jugador.
+- **Objetivo**: Atrapa emojis para crecer y evita quedarte sin atrapar emojis por 30 segundos.
+- **Finales**:
+  - **Victoria**: Crece lo suficiente para cubrir toda la pantalla.
+  - **Final Pacífico**: No atrapes emojis durante 30 segundos.
+
+## **Archivos Nuevos**
+- `assets/stress.mp3`: Archivo de sonido para el efecto de estrés.
+
+## **Notas**
+- Asegúrate de tener `pygame` instalado para ejecutar el juego.
+- ¡Gracias por jugar Agus Simulator!
