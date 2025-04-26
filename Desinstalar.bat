@@ -24,5 +24,5 @@ if %errorlevel% equ 0 (
 )
 
 REM Confirmar desinstalación
-echo Todas las dependencias han sido desinstaladas.
+echo Todas las dependencias específicas del juego han sido desinstaladas.
 pause

@@ -1,5 +1,6 @@
 import pygame  # Importar pygame para usar sus funciones de dibujo
 
+# $revision 1 hecha
 class Emoji:
     def __init__(self, position, image):
         self.position = position  # Coordenadas (x, y)
@@ -8,7 +9,7 @@ class Emoji:
 
     def fall(self, speed):
         self.position[1] += speed  # Mover el emoji hacia abajo
-        self.size += 0.01  # Incrementar ligeramente el tamaño del emoji con cada caída
+        self.size += 0.05  # Incrementar ligeramente el tamaño del emoji con cada caída
 
     def isCaught(self, player_position, player_size):
         # player_size es un entero que representa el ancho y alto del jugador (cuadrado)
