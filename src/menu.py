@@ -1,4 +1,5 @@
 import pygame
+import sys
 
 # Función para mostrar el menú inicial
 def show_menu(screen):
@@ -62,4 +63,51 @@ def show_menu(screen):
                     pygame.quit()
                     exit()
 
-# revision 2 completa
+def show_mode_selection_menu(screen):
+    pygame.font.init()
+    font = pygame.font.Font(None, 74)
+    small_font = pygame.font.Font(None, 50)
+
+    options = [
+        "1. Clásico",
+        "2. Modo hetero (próximamente)",
+        "3. Infinito (próximamente)"
+    ]
+
+    selected_mode = None
+    while selected_mode is None:
+        screen.fill((0, 0, 0))
+        title = font.render("Selecciona un modo", True, (255, 255, 255))
+        title_rect = title.get_rect(center=(screen.get_width() // 2, 100))
+        screen.blit(title, title_rect)
+
+        for i, option in enumerate(options):
+            text = small_font.render(option, True, (255, 255, 255))
+            text_rect = text.get_rect(center=(screen.get_width() // 2, 200 + i * 60))
+            screen.blit(text, text_rect)
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    selected_mode = 1
+                elif event.key in [pygame.K_2, pygame.K_3]:
+                    # Mostrar mensaje de "próximamente" y volver al menú
+                    show_coming_soon_message(screen)
+                    selected_mode = None
+
+    return selected_mode
+
+def show_coming_soon_message(screen):
+    pygame.font.init()
+    font = pygame.font.Font(None, 74)
+    screen.fill((0, 0, 0))
+    message = font.render("¡Próximamente!", True, (255, 255, 255))
+    message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+    screen.blit(message, message_rect)
+    pygame.display.flip()
+    pygame.time.delay(2000)  # Mostrar el mensaje durante 2 segundos
