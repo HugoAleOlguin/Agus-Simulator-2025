@@ -54,7 +54,7 @@ REM Ejecutar el juego
 echo ==========================================================
 echo [INFO] Iniciando el juego...
 echo ==========================================================
-python src\game.py
+python main.py
 if %errorlevel% neq 0 (
     echo ==========================================================
     echo [ERROR] Hubo un error al ejecutar el juego.
