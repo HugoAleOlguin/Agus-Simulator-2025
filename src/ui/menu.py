@@ -206,12 +206,19 @@ def show_mode_selection_menu(screen):
         }
     }
 
-    # Solo mostrar los modos que tienen un archivo .py correspondiente
-    modes_dir = os.path.join(os.path.dirname(__file__), '..', 'modes')
-    available_modes = [f.replace('.py', '') for f in os.listdir(modes_dir) 
-                      if f.endswith('_mode.py') and f != 'base_mode.py' 
-                      and os.path.exists(os.path.join(modes_dir, f))
-                      and f.replace('.py', '') in modes_info]
+    # Usar ruta absoluta para los modos
+    if getattr(sys, 'frozen', False):
+        modes_dir = os.path.join(sys._MEIPASS, 'src', 'modes')
+    else:
+        modes_dir = os.path.join(os.path.dirname(__file__), '..', 'modes')
+    
+    available_modes = [
+        f.replace('.py', '') for f in os.listdir(modes_dir) 
+        if f.endswith('_mode.py') 
+        and f != 'base_mode.py'
+        and os.path.exists(os.path.join(modes_dir, f))
+        and f.replace('.py', '') in modes_info
+    ]
 
     selected = 0
     while True:

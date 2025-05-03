@@ -1,6 +1,8 @@
+import os
+import sys
 import pygame
 import random
-import os
+from src.utils import get_asset_path
 
 class Star:
     def __init__(self, x, y, speed, size):
@@ -45,14 +47,30 @@ class StarField:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        # Cargar imágenes de espacio
-        self.space_images = {}  # Cambiar a diccionario
-        space_dir = os.path.join('src', 'assets', 'space')
-        for file in os.listdir(space_dir):
-            if file.endswith('.png'):
-                img = pygame.image.load(os.path.join(space_dir, file))
-                self.space_images[file] = img  # Guardar nombre y imagen
-        
+        self.space_images = {}
+
+        try:
+            # Usar get_asset_path para obtener la ruta correcta
+            base_path = get_asset_path('space')
+            
+            if os.path.exists(base_path):
+                print(f"Carpeta space encontrada en: {base_path}")
+                for file in os.listdir(base_path):
+                    if file.endswith('.png'):
+                        img_path = os.path.join(base_path, file)
+                        try:
+                            img = pygame.image.load(img_path)
+                            self.space_images[file] = img
+                            print(f"Cargada imagen espacial: {file}")
+                        except Exception as e:
+                            print(f"Error cargando imagen {file}: {e}")
+            else:
+                print(f"Directorio space no encontrado: {base_path}")
+                self._create_backup_images()
+        except Exception as e:
+            print(f"Error accediendo a space: {e}")
+            self._create_backup_images()
+
         # Crear estrellas
         self.back_stars = [Star(random.randint(0, width), random.randint(0, height), 1, 1) for _ in range(50)]
         self.mid_stars = [Star(random.randint(0, width), random.randint(0, height), 2, 1) for _ in range(30)]
@@ -64,6 +82,15 @@ class StarField:
         self.spawn_delay = 300  # Más tiempo entre grupos de spawn
         self.max_objects = 3
         self.current_types = set()  # Registrar tipos actuales
+
+    def _create_backup_images(self):
+        """Crear imágenes de respaldo si no se encuentran las originales"""
+        colors = [(100, 100, 100), (150, 150, 150), (200, 200, 200)]
+        for i, color in enumerate(colors):
+            backup = pygame.Surface((50, 50))
+            backup.fill(color)
+            self.space_images[f'backup_{i}.png'] = backup
+        print("Creadas imágenes de respaldo")
 
     def spawn_group(self):
         available_images = [name for name in self.space_images.keys() 
