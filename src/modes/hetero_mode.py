@@ -2,12 +2,13 @@ import time
 import random
 import math
 import pygame
-from .base_mode import BaseMode
-from entities.emoji import Emoji
-from entities.player import Player
-from ui.hud import draw_timer, draw_fall_speed
-from config import FPS
-from utils import load_audio, load_image
+
+from src.entities.emoji import Emoji
+from src.entities.player import Player
+from src.ui.hud import draw_timer, draw_fall_speed
+from src.config import FPS
+from src.utils import load_audio, load_image
+from src.modes.base_mode import BaseMode
 
 class HeteroMode(BaseMode):
     def __init__(self, screen, clock, WIDTH, HEIGHT, player_image, emoji_image, resources):
@@ -88,7 +89,7 @@ class HeteroMode(BaseMode):
             # Texto con contorno
             self._draw_text_with_outline(
                 "Te han cancelado\n"
-                f"Duraste {total_time:.1f}s siendo heterosexual\n"
+                f"Duraste solo {total_time:.2f} segundos siendo heterosexual\n"
                 "ENTER para volver al menú",
                 self.HEIGHT - 120,
                 36  # Tamaño de fuente más pequeño
@@ -157,7 +158,7 @@ class HeteroMode(BaseMode):
             # HUD mejorado
             # Timer con sombra
             font = pygame.font.Font(None, 36)
-            timer_text = f"Tiempo: {elapsed_time:.1f}s"
+            timer_text = f"Tiempo: {elapsed_time:.2f}s"
             shadow = font.render(timer_text, True, (0, 0, 0))
             text = font.render(timer_text, True, (255, 255, 255))
             self.screen.blit(shadow, (12, 12))

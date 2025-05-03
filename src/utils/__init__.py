@@ -1,9 +1,52 @@
 import os
+import sys
 import pygame
 
+def get_absolute_path(relative_path):
+    """Obtiene la ruta absoluta para assets tanto en desarrollo como compilado"""
+    try:
+        if getattr(sys, 'frozen', False):
+            base_path = os.path.join(sys._MEIPASS, 'src', 'assets')
+        else:
+            base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'src', 'assets')
+        
+        full_path = os.path.join(base_path, relative_path)
+        if os.path.exists(full_path):
+            return full_path
+            
+        # Intentar rutas alternativas si no se encuentra
+        alt_paths = [
+            os.path.join(os.getcwd(), 'src', 'assets', relative_path),
+            os.path.join(sys._MEIPASS if getattr(sys, 'frozen', False) else os.getcwd(), relative_path)
+        ]
+        
+        for path in alt_paths:
+            if os.path.exists(path):
+                return path
+                
+        print(f"No se pudo encontrar el asset: {relative_path}")
+        print(f"Rutas intentadas:\n" + "\n".join([full_path] + alt_paths))
+        return full_path
+        
+    except Exception as e:
+        print(f"Error resolviendo ruta para {relative_path}: {e}")
+        return None
+
 def get_asset_path(name):
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    return os.path.join(base_dir, 'src', 'assets', name)
+    path = get_absolute_path(name)
+    if not path or not os.path.exists(path):
+        print(f"Asset no encontrado: {name}")
+        # Intentar buscar en rutas alternativas
+        alt_paths = [
+            os.path.join(os.getcwd(), 'src', 'assets', name),
+            os.path.join(os.getcwd(), 'assets', name),
+            os.path.join(os.path.dirname(sys.executable), 'src', 'assets', name)
+        ]
+        for alt_path in alt_paths:
+            if os.path.exists(alt_path):
+                print(f"Asset encontrado en ruta alternativa: {alt_path}")
+                return alt_path
+    return path
 
 def load_image(name):
     fullpath = get_asset_path(name)

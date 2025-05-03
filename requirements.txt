@@ -1,0 +1,4 @@
+pygame==2.5.2
+pyinstaller==6.3.0
+pillow==10.2.0  # Para soporte de imágenes
+setuptools>=65.5.1  # Requerido por pyinstaller

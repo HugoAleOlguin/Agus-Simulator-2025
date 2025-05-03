@@ -8,9 +8,8 @@ from src.entities.emoji import Emoji
 from src.entities.player import Player
 from src.ui.hud import draw_timer, draw_emoji_count, draw_peaceful_progress, draw_fall_speed
 from src.utils import load_image, load_gif_frames, load_audio
-from src.effects.background import SimpleBackground
-from config import FPS
-from .base_mode import BaseMode
+from src.config import FPS
+from src.modes.base_mode import BaseMode
 
 class ClassicMode(BaseMode):
     def __init__(self, screen, clock, WIDTH, HEIGHT, player_image, emoji_image, resources):
@@ -19,21 +18,30 @@ class ClassicMode(BaseMode):
         self.victory_frames = load_gif_frames('endings/congratulations')
         self.dodge_image = load_image('endings/budagus.webp')
         self.secret_image = load_image('endings/secret.jpeg')
+        
+        # Pre-renderizar superficies del HUD
+        self.hud_surface = pygame.Surface((WIDTH, 50))
+        self.hud_surface.fill((0, 0, 0))
+        self.hud_surface.set_alpha(5)
+        
+        self.bottom_hud = pygame.Surface((WIDTH, 50))
+        self.bottom_hud.fill((0, 0, 0))
+        self.bottom_hud.set_alpha(5)
+        
         # Cargar sonidos
         self.victory_sound = pygame.mixer.Sound(load_audio('music/victory.ogg'))
         self.dodge_sound = pygame.mixer.Sound(load_audio('music/budagus.ogg'))
         self.secret_sound = pygame.mixer.Sound(load_audio('music/secret.ogg'))
         
-        # Verificar que tengamos frames de victoria
+        # Verificar frames de victoria
         if not self.victory_frames:
-            print("Advertencia: No se encontraron frames para la animación de victoria")
-            # Crear un frame de respaldo
             backup_frame = pygame.Surface((WIDTH, HEIGHT))
-            backup_frame.fill((0, 255, 0))  # Verde como respaldo
+            backup_frame.fill((0, 255, 0))
             self.victory_frames = [backup_frame]
         
-        self.secret_unlocked = False  # Nueva bandera para el final secreto
-        self.background = SimpleBackground(WIDTH, HEIGHT)
+        self.secret_unlocked = False
+        self.font_small = pygame.font.Font(None, 32)
+        self.font = pygame.font.Font(None, 36)
 
     def check_endings(self, player, last_catch_time, start_time):
         current_time = time.time()
@@ -100,7 +108,7 @@ class ClassicMode(BaseMode):
             # Texto con contorno
             self._draw_text_with_outline(
                 "¡Te tragaste todo!\n"
-                f"Tardaste {total_time:.1f}s en salir del clóset\n"
+                f"Tardaste {total_time:.2f}s en salir del clóset\n"
                 "ENTER para volver al menú",
                 self.HEIGHT - 120,
                 font_size=36  # Texto más pequeño
@@ -108,8 +116,7 @@ class ClassicMode(BaseMode):
 
             # Texto de reinicio
             restart_text = "Presiona R para intentar de nuevo"
-            font_small = pygame.font.Font(None, 32)
-            restart_surface = font_small.render(restart_text, True, (200, 200, 200))
+            restart_surface = self.font_small.render(restart_text, True, (200, 200, 200))
             self.screen.blit(restart_surface, (10, 10))
             
             pygame.display.flip()
@@ -150,13 +157,12 @@ class ClassicMode(BaseMode):
                 "¡ALELUYA HERMANO!\n"
                 "ENTER para volver al menú",
                 self.HEIGHT - 120,
-                font_size=36
+                font_size=40
             )
 
             # Texto de reinicio
             restart_text = "Presiona R para intentar de nuevo"
-            font_small = pygame.font.Font(None, 32)
-            restart_surface = font_small.render(restart_text, True, (200, 200, 200))
+            restart_surface = self.font_small.render(restart_text, True, (200, 200, 200))
             self.screen.blit(restart_surface, (10, 10))
             
             pygame.display.flip()
@@ -222,12 +228,12 @@ class ClassicMode(BaseMode):
         player = Player(self.WIDTH // 2, self.HEIGHT - 100)
         player.set_image(self.player_image)
         running = True
-        self.secret_unlocked = False  # Inicializar bandera de secreto
+        self.secret_unlocked = False
         MAX_EMOJIS = 25
+        clock = pygame.time.Clock()
 
         while running:
             current_time = time.time()
-            dt = self.clock.tick(60) / 1000.0
             elapsed_time = current_time - start_time
 
             for event in pygame.event.get():
@@ -235,7 +241,7 @@ class ClassicMode(BaseMode):
                     pygame.quit()
                     exit()
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                    return self.run_mode()  # Reiniciar partida en cualquier momento
+                    return self.run_mode()
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_a]: player.move(-5, 0, self.WIDTH, self.HEIGHT)
@@ -243,20 +249,19 @@ class ClassicMode(BaseMode):
             if keys[pygame.K_w]: player.move(0, -5, self.WIDTH, self.HEIGHT)
             if keys[pygame.K_s]: player.move(0, 5, self.WIDTH, self.HEIGHT)
 
-            # Verificar tiempo para final secreto sin interrumpir
             if elapsed_time >= 200.0:
                 self.secret_unlocked = True
 
             if self.check_endings(player, last_emoji_catch_time, start_time):
                 return
 
-            # Generar emojis con frecuencia aumentada
-            spawn_chance = max(2, 30 - int(elapsed_time // 10))  # Aumenta frecuencia con el tiempo
+            # Optimizar generación de emojis
+            spawn_chance = max(2, 30 - int(elapsed_time // 10))
             if len(emojis) < MAX_EMOJIS and random.randint(1, spawn_chance) == 1:
-                emojis.append(Emoji([random.randint(0, self.WIDTH - 20), 0], self.emoji_image))
+                emojis.append(Emoji([random.randint(0, self.WIDTH - 20), -30], self.emoji_image))
 
-            # Actualizar emojis con velocidad aumentada
-            fall_speed = 2 + (elapsed_time / 10)  # Velocidad base + incremento gradual
+            # Actualizar emojis
+            fall_speed = 2 + (elapsed_time / 10)
             for emoji in emojis[:]:
                 emoji.fall(fall_speed)
                 if emoji.isCaught(player.get_position(), player.get_size()):
@@ -267,33 +272,23 @@ class ClassicMode(BaseMode):
                 elif emoji.position[1] > self.HEIGHT:
                     emojis.remove(emoji)
 
-            # Actualizar y dibujar fondo
-            self.background.update(dt)
-            self.background.draw(self.screen)
-
-            # Render
+            # Render optimizado
+            self.screen.fill((160, 160, 160))
+            
+            # Renderizar sprites
             player.draw(self.screen)
             for emoji in emojis:
                 emoji.draw(self.screen)
 
-            # HUD mejorado
-            # Fondo semitransparente para el HUD
-            hud_surface = pygame.Surface((self.WIDTH, 50)) # Ajustar el tamaño del HUD
-            hud_surface.fill((0, 0, 0)) # 
-            hud_surface.set_alpha(5) # Ajustar la opacidad
-            self.screen.blit(hud_surface, (0, 0)) # Ajustar la posición del HUD
+            # HUD optimizado
+            self.screen.blit(self.hud_surface, (0, 0))
+            self.screen.blit(self.bottom_hud, (0, self.HEIGHT - 50))
             
-            # HUD superior con información principal
+            # Info principal
             draw_timer(self.screen, start_time, 10, 15)
             draw_emoji_count(self.screen, emoji_count, self.WIDTH - 250, 15)
-
-            # HUD inferior con barra de progreso
-            bottom_hud = pygame.Surface((self.WIDTH, 50))
-            bottom_hud.fill((0, 0, 0))
-            bottom_hud.set_alpha(5)
-            self.screen.blit(bottom_hud, (0, self.HEIGHT - 50))
-
-            # Barra de progreso y velocidad
+            
+            # Barra de progreso
             draw_peaceful_progress(
                 self.screen, 
                 last_emoji_catch_time, 
@@ -303,23 +298,17 @@ class ClassicMode(BaseMode):
                 20
             )
             
-            # Velocidad con color basado en el valor
-            speed_color = (
-                min(255, fall_speed * 25),
-                max(0, 255 - fall_speed * 25),
-                0
-            )
+            # Velocidad
+            speed_color = (min(255, fall_speed * 25), max(0, 255 - fall_speed * 25), 0)
             draw_fall_speed(self.screen, fall_speed, 10, self.HEIGHT - 35, speed_color)
 
-            # Indicador de final secreto (si está desbloqueado)
+            # Final secreto
             if self.secret_unlocked:
-                secret_text = "bro..."
                 secret_color = (255, 215, 0) if (pygame.time.get_ticks() // 500) % 2 else (255, 165, 0)
-                font = pygame.font.Font(None, 36)
-                text = font.render(secret_text, True, secret_color)
+                text = self.font.render("bro...", True, secret_color)
                 text_rect = text.get_rect(center=(self.WIDTH // 2, 25))
                 self.screen.blit(text, text_rect)
 
             pygame.display.flip()
-            self.clock.tick(FPS)
+            clock.tick(FPS)
 
