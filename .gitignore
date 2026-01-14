@@ -1,0 +1,37 @@
+# Entorno virtual de Python
+venv/
+.venv/
+env/
+.env/
+
+# Archivos de compilación de PyInstaller
+build/
+dist/
+*.spec.bak
+
+# Bytecode de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs y editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs y archivos temporales
+*.log
+*.tmp
+*.temp
+
+# Archivos de configuración local
+.env.local
+config.local.py
