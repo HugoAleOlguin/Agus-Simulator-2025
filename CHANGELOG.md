@@ -4,7 +4,7 @@ Todos los cambios notables de este proyecto están documentados aquí.
 
 ---
 
-## [3.1] - 2025
+## [3.1] - 01/2026
 
 ### 🎨 Sistema de Skins
 - Selector visual de skins integrado en el menú de modos
