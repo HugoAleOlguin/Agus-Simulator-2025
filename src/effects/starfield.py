@@ -1,8 +1,8 @@
 import os
-import sys
 import pygame
 import random
 from src.utils import get_asset_path
+
 
 class Star:
     def __init__(self, x, y, speed, size):

@@ -1,8 +1,6 @@
 import pygame
 import time
 
-# $revision 1 hecha
-
 # Función para dibujar el temporizador en tiempo real
 def draw_timer(screen, start_time, x, y):
     elapsed_time = time.time() - start_time

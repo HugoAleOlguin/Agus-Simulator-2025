@@ -19,5 +19,3 @@ class Emoji:
     def draw(self, screen):
         scaled_image = pygame.transform.scale(self.image, (int(self.size), int(self.size)))  # Escalar la imagen
         screen.blit(scaled_image, (int(self.position[0]), int(self.position[1])))  # Dibujar la imagen
-
-# Optimización hecha 1/5/25

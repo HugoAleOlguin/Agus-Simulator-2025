@@ -35,3 +35,7 @@ desktop.ini
 # Archivos de configuración local
 .env.local
 config.local.py
+
+# Datos locales del juego (user-specific)
+data/settings.json
+data/custom_skins/

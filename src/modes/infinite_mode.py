@@ -2,7 +2,7 @@ import pygame
 import time
 import random
 import math
-import sys  # Agregar esta importación
+import sys
 
 from src.modes.base_mode import BaseMode
 from src.utils.save_system import SaveSystem
@@ -305,4 +305,11 @@ class InfiniteMode(BaseMode):
         except Exception as e:
             print(f"Error en modo infinito: {e}")
         finally:
-            pygame.mixer.music.stop()
+            # Restaurar música de fondo al salir
+            try:
+                background_music = load_music('music/background.ogg')
+                if background_music:
+                    pygame.mixer.music.load(background_music)
+                    pygame.mixer.music.play(-1)
+            except Exception as e:
+                print(f"Error restaurando música: {e}")

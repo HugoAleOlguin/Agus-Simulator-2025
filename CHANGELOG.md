@@ -4,7 +4,31 @@ Todos los cambios notables de este proyecto están documentados aquí.
 
 ---
 
+## [3.1] - 2025
+
+### 🎨 Sistema de Skins
+- Selector visual de skins integrado en el menú de modos
+- 3 skins predeterminadas: Agus, Fumador, Tormenta
+- Importar fotos personalizadas (tecla I)
+- Persistencia de skin seleccionada
+- Skins personalizadas guardadas en `data/custom_skins/`
+
+### 🧹 Limpieza de Código
+- Eliminados archivos duplicados (`config.py`, `utils.py`)
+- Unificados módulos de configuración y utilidades
+- Limpieza de imports no usados y comentarios obsoletos
+- Agregado `__init__.py` faltante en `effects/`
+
+### 🔧 Mejoras
+- Menú más ancho (900px) para evitar superposición de textos
+- Tamaño fijo de juego (600x600) con escalado automático de skins
+- Corregido problema de audio al salir del modo infinito
+- Actualizado `.gitignore` para ignorar datos locales
+
+---
+
 ## [3.0] - 2025
+
 
 ### 🎮 Nuevos Modos de Juego
 
