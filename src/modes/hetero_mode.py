@@ -6,6 +6,7 @@ import pygame
 from src.entities.emoji import Emoji
 from src.entities.player import Player
 from src.ui.hud import draw_timer, draw_fall_speed
+from src.ui.pause_menu import show_pause_menu, show_options_menu
 from src.config import FPS
 from src.utils import load_audio, load_image
 from src.modes.base_mode import BaseMode
@@ -114,15 +115,29 @@ class HeteroMode(BaseMode):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                    return self.run_mode()  # Reiniciar partida
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        return self.run_mode()
+                    elif event.key == pygame.K_ESCAPE:
+                        # Pausar el juego
+                        pause_start = time.time()
+                        result = show_pause_menu(self.screen, self.clock)
+                        pause_duration = time.time() - pause_start
+                        start_time += pause_duration
+                        
+                        if result == 'restart':
+                            return self.run_mode()
+                        elif result == 'options':
+                            show_options_menu(self.screen, self.clock)
+                        elif result == 'menu':
+                            return
 
-            # Movimiento del jugador
+            # Movimiento del jugador (WASD y flechas)
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_a]: player.move(-5, 0, self.WIDTH, self.HEIGHT)
-            if keys[pygame.K_d]: player.move(5, 0, self.WIDTH, self.HEIGHT)
-            if keys[pygame.K_w]: player.move(0, -5, self.WIDTH, self.HEIGHT)
-            if keys[pygame.K_s]: player.move(0, 5, self.WIDTH, self.HEIGHT)
+            if keys[pygame.K_a] or keys[pygame.K_LEFT]: player.move(-5, 0, self.WIDTH, self.HEIGHT)
+            if keys[pygame.K_d] or keys[pygame.K_RIGHT]: player.move(5, 0, self.WIDTH, self.HEIGHT)
+            if keys[pygame.K_w] or keys[pygame.K_UP]: player.move(0, -5, self.WIDTH, self.HEIGHT)
+            if keys[pygame.K_s] or keys[pygame.K_DOWN]: player.move(0, 5, self.WIDTH, self.HEIGHT)
 
             # Generar emojis
             if len(emojis) < MAX_EMOJIS and random.randint(1, 10) == 1: # Ajustar la probabilidad

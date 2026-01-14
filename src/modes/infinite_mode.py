@@ -9,6 +9,8 @@ from src.utils.save_system import SaveSystem
 from src.entities.player import Player
 from src.entities.emoji import Emoji
 from src.utils import load_image, load_music
+from src.ui.pause_menu import show_pause_menu, show_options_menu
+from src.ui.visual_effects import FPSCounter, ParticleSystem, Transition
 from src.effects.starfield import StarField
 
 class InfiniteMode(BaseMode):
@@ -18,16 +20,21 @@ class InfiniteMode(BaseMode):
         self.player = Player(WIDTH // 2, HEIGHT - 100)
         self.player.set_image(player_image)
         self.emojis = []
-        self.hearts = []  # Lista para corazones cayendo
-        self.lives = 3  # Reducido a 3 vidas
-        self.hurt_effect = 0  # Contador para efecto de daño
+        self.hearts = []
+        self.lives = 3
+        self.hurt_effect = 0
         self.save_system = SaveSystem()
         self.best_time = self.save_system.get_record('infinite_mode')
         self.start_time = time.time()
         self.starfield = StarField(WIDTH, HEIGHT)
         self.particles = []
-        self.game_over_particles = []  # Para explosión final
+        self.game_over_particles = []
         self.space_music = load_music('music/space_sound/Sci-Fi 6 Loop.ogg')
+
+        # FPS Counter y sistema de partículas mejorado
+        self.fps_counter = FPSCounter()
+        self.particle_system = ParticleSystem()
+        self.transition = Transition(WIDTH, HEIGHT)
 
         # Pre-renderizar superficies comunes
         self.hud_surface = pygame.Surface((WIDTH, 100))
@@ -45,33 +52,16 @@ class InfiniteMode(BaseMode):
         self.font_small = pygame.font.Font(None, 36)
 
     def create_particles(self, x, y, color, count=20):
-        for _ in range(count):
-            angle = random.uniform(0, 360)
-            speed = random.uniform(2, 5)
-            self.particles.append({
-                'x': x,
-                'y': y,
-                'dx': math.cos(math.radians(angle)) * speed,
-                'dy': math.sin(math.radians(angle)) * speed,
-                'life': 1.0,
-                'color': color
-            })
+        """Crea partículas usando el sistema mejorado."""
+        self.particle_system.emit_burst(x, y, color, count)
 
     def update_particles(self, dt):
-        for particle in self.particles[:]:
-            particle['x'] += particle['dx']
-            particle['y'] += particle['dy']
-            particle['life'] -= dt * 2
-            if particle['life'] <= 0:
-                self.particles.remove(particle)
+        """Actualiza el sistema de partículas."""
+        self.particle_system.update(dt)
 
     def draw_particles(self):
-        for particle in self.particles:
-            alpha = int(255 * particle['life'])
-            color = (*particle['color'], alpha)
-            pos = (int(particle['x']), int(particle['y']))
-            size = int(3 * particle['life'])
-            pygame.draw.circle(self.screen, color, pos, size)
+        """Dibuja las partículas."""
+        self.particle_system.draw(self.screen)
 
     def draw_hud(self):
         # Fondo semi-transparente para HUD
@@ -216,20 +206,30 @@ class InfiniteMode(BaseMode):
                         exit()
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
-                            self.save_system.save_record('infinite_mode', current_time)
-                            # Restaurar música original
-                            pygame.mixer.music.load(load_music('music/background.ogg'))
-                            pygame.mixer.music.play(-1)
-                            running = False
-                        if event.key == pygame.K_r:
-                            self.reset_game()  # Reiniciar en cualquier momento con R
+                            # Pausar el juego
+                            pause_start = time.time()
+                            result = show_pause_menu(self.screen, self.clock)
+                            pause_duration = time.time() - pause_start
+                            # Compensar el tiempo de pausa
+                            self.start_time += pause_duration
+                            
+                            if result == 'restart':
+                                self.reset_game()
+                            elif result == 'options':
+                                show_options_menu(self.screen, self.clock)
+                            elif result == 'menu':
+                                self.save_system.save_record('infinite_mode', current_time)
+                                running = False
+                        elif event.key == pygame.K_r:
+                            self.reset_game()
+
                 
-                # Input
+                # Input (WASD y flechas)
                 keys = pygame.key.get_pressed()
-                if keys[pygame.K_a]: self.player.move(-5, 0, self.WIDTH, self.HEIGHT)
-                if keys[pygame.K_d]: self.player.move(5, 0, self.WIDTH, self.HEIGHT)
-                if keys[pygame.K_w]: self.player.move(0, -5, self.WIDTH, self.HEIGHT)
-                if keys[pygame.K_s]: self.player.move(0, 5, self.WIDTH, self.HEIGHT)
+                if keys[pygame.K_a] or keys[pygame.K_LEFT]: self.player.move(-5, 0, self.WIDTH, self.HEIGHT)
+                if keys[pygame.K_d] or keys[pygame.K_RIGHT]: self.player.move(5, 0, self.WIDTH, self.HEIGHT)
+                if keys[pygame.K_w] or keys[pygame.K_UP]: self.player.move(0, -5, self.WIDTH, self.HEIGHT)
+                if keys[pygame.K_s] or keys[pygame.K_DOWN]: self.player.move(0, 5, self.WIDTH, self.HEIGHT)
                 
                 # Actualizar efecto de daño
                 if self.hurt_effect > 0:
@@ -300,6 +300,14 @@ class InfiniteMode(BaseMode):
                     heart.draw(self.screen)
                 self.draw_particles()
                 self.draw_hud()
+                
+                # FPS Counter
+                self.fps_counter.update(self.clock)
+                self.fps_counter.draw(self.screen)
+                
+                # Transición
+                self.transition.update()
+                self.transition.draw(self.screen)
                 
                 pygame.display.flip()
         except Exception as e:

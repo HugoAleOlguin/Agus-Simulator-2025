@@ -9,7 +9,7 @@ import math
 import time
 from src.config import FPS, MENU_WIDTH, MENU_HEIGHT, COLORS
 
-GAME_VERSION = "Version 3.1"
+GAME_VERSION = "Version 3.5"
 
 
 def show_classic_tutorial(screen):

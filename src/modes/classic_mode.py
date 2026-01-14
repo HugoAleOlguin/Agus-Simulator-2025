@@ -6,7 +6,9 @@ import pygame
 from src.entities.emoji import Emoji
 from src.entities.player import Player
 from src.ui.hud import draw_timer, draw_emoji_count, draw_peaceful_progress, draw_fall_speed
+from src.ui.pause_menu import show_pause_menu, show_options_menu
 from src.utils import load_image, load_gif_frames, load_audio
+from src.utils.settings import get_settings
 from src.config import FPS
 from src.modes.base_mode import BaseMode
 
@@ -239,14 +241,32 @@ class ClassicMode(BaseMode):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                    return self.run_mode()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        return self.run_mode()
+                    elif event.key == pygame.K_ESCAPE:
+                        # Pausar el juego
+                        pause_start = time.time()
+                        result = show_pause_menu(self.screen, clock)
+                        pause_duration = time.time() - pause_start
+                        # Ajustar tiempos para compensar la pausa
+                        start_time += pause_duration
+                        last_emoji_catch_time += pause_duration
+                        
+                        if result == 'restart':
+                            return self.run_mode()
+                        elif result == 'options':
+                            show_options_menu(self.screen, clock)
+                        elif result == 'menu':
+                            return
+                        # 'continue' simplemente sigue el juego
 
+            # Input (WASD y flechas)
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_a]: player.move(-5, 0, self.WIDTH, self.HEIGHT)
-            if keys[pygame.K_d]: player.move(5, 0, self.WIDTH, self.HEIGHT)
-            if keys[pygame.K_w]: player.move(0, -5, self.WIDTH, self.HEIGHT)
-            if keys[pygame.K_s]: player.move(0, 5, self.WIDTH, self.HEIGHT)
+            if keys[pygame.K_a] or keys[pygame.K_LEFT]: player.move(-5, 0, self.WIDTH, self.HEIGHT)
+            if keys[pygame.K_d] or keys[pygame.K_RIGHT]: player.move(5, 0, self.WIDTH, self.HEIGHT)
+            if keys[pygame.K_w] or keys[pygame.K_UP]: player.move(0, -5, self.WIDTH, self.HEIGHT)
+            if keys[pygame.K_s] or keys[pygame.K_DOWN]: player.move(0, 5, self.WIDTH, self.HEIGHT)
 
             if elapsed_time >= 200.0:
                 self.secret_unlocked = True

@@ -4,6 +4,35 @@ Todos los cambios notables de este proyecto están documentados aquí.
 
 ---
 
+## [3.5] - 01/2026
+
+### ⏸️ Menú de Pausa
+- Nuevo menú de pausa con ESC durante cualquier partida
+- Opciones: Continuar, Reiniciar, Opciones, Volver al menú
+- El juego se congela completamente al pausar
+- Música baja de volumen automáticamente
+
+### ⚙️ Menú de Opciones
+- Control de volumen de música (0-100%)
+- Control de volumen de efectos (0-100%)
+- Configuración persistente en `data/settings.json`
+
+### 🎮 Controles Mejorados
+- Soporte para flechas del teclado (↑↓←→) además de WASD
+- Funciona en todos los modos de juego
+
+### ✨ Sistema de Partículas Mejorado
+- Partículas con efecto de glow
+- Gravedad y fricción realistas
+- Tamaño que disminuye con el tiempo
+
+### 🔧 Nuevos Módulos
+- `pause_menu.py` - Sistema de pausa
+- `settings.py` - Gestión de configuración
+- `visual_effects.py` - Efectos visuales y partículas
+
+---
+
 ## [3.1] - 01/2026
 
 ### 🎨 Sistema de Skins
