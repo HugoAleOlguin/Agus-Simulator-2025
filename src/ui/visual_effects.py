@@ -58,6 +58,8 @@ class Transition:
 class ParticleSystem:
     """Sistema de partículas mejorado."""
     
+    MAX_PARTICLES = 150  # Límite máximo para evitar caída de FPS
+    
     def __init__(self):
         self.particles = []
     
@@ -67,6 +69,13 @@ class ParticleSystem:
         """
         import random
         import math
+        
+        # Limitar partículas nuevas si estamos cerca del máximo
+        available_slots = self.MAX_PARTICLES - len(self.particles)
+        count = min(count, available_slots)
+        
+        if count <= 0:
+            return
         
         for _ in range(count):
             angle = random.uniform(0, 360)
@@ -100,16 +109,16 @@ class ParticleSystem:
     
     def update(self, dt):
         """Actualiza todas las partículas."""
-        for particle in self.particles[:]:
+        for particle in self.particles:
             particle['x'] += particle['dx']
             particle['y'] += particle['dy']
             particle['dy'] += particle['gravity']
             particle['dx'] *= 0.98
             particle['dy'] *= 0.98
             particle['life'] -= dt
-            
-            if particle['life'] <= 0:
-                self.particles.remove(particle)
+        
+        # Usar list comprehension en lugar de remove() para O(n) vs O(n²)
+        self.particles = [p for p in self.particles if p['life'] > 0]
     
     def draw(self, screen):
         """Dibuja todas las partículas."""

@@ -9,6 +9,7 @@ from src.ui.hud import draw_timer, draw_fall_speed
 from src.ui.pause_menu import show_pause_menu, show_options_menu
 from src.config import FPS
 from src.utils import load_audio, load_image
+from src.utils.achievements import get_achievement_manager, AchievementNotification
 from src.modes.base_mode import BaseMode
 
 class HeteroMode(BaseMode):
@@ -20,6 +21,17 @@ class HeteroMode(BaseMode):
             print("Error cargando imagen de muerte, usando fondo negro")
         self.bg_time = 0
         self.wave_offset = 0
+        
+        # Power-up de ralentización de emojis
+        self.slowdown_active = False
+        self.slowdown_end_time = 0
+        self.slowdown_fade_end_time = 0
+        self.slowdown_multiplier = 1.0  # 1.0 = normal, 0.3 = lento
+        
+        # Sistema de logros
+        self.achievement_manager = get_achievement_manager()
+        self.achievement_notification = AchievementNotification(WIDTH, HEIGHT)
+        self.survivor_unlocked = False
 
     def draw_background(self, current_time):
         # Colores base suaves
@@ -104,8 +116,13 @@ class HeteroMode(BaseMode):
         player = Player(self.WIDTH // 2, self.HEIGHT - 100)
         player.set_image(self.player_image)
         emojis = []
+        powerups = []  # Lista de power-ups
         running = True
         MAX_EMOJIS = 15
+        self.slowdown_active = False
+        self.slowdown_end_time = 0
+        self.slowdown_fade_end_time = 0
+        self.slowdown_multiplier = 1.0
 
         while running:
             current_time = time.time()
@@ -124,6 +141,10 @@ class HeteroMode(BaseMode):
                         result = show_pause_menu(self.screen, self.clock)
                         pause_duration = time.time() - pause_start
                         start_time += pause_duration
+                        # Compensar pausa en power-up
+                        if self.slowdown_active:
+                            self.slowdown_end_time += pause_duration
+                            self.slowdown_fade_end_time += pause_duration
                         
                         if result == 'restart':
                             return self.run_mode()
@@ -132,6 +153,20 @@ class HeteroMode(BaseMode):
                         elif result == 'menu':
                             return
 
+            # Actualizar estado de ralentización
+            if self.slowdown_active:
+                if current_time > self.slowdown_fade_end_time:
+                    # Terminó completamente
+                    self.slowdown_active = False
+                    self.slowdown_multiplier = 1.0
+                elif current_time > self.slowdown_end_time:
+                    # Fase de transición suave (2 segundos de fade-out)
+                    fade_progress = (current_time - self.slowdown_end_time) / 2.0
+                    self.slowdown_multiplier = 0.3 + (0.7 * fade_progress)  # 0.3 -> 1.0
+                else:
+                    # Efecto completo
+                    self.slowdown_multiplier = 0.3
+            
             # Movimiento del jugador (WASD y flechas)
             keys = pygame.key.get_pressed()
             if keys[pygame.K_a] or keys[pygame.K_LEFT]: player.move(-5, 0, self.WIDTH, self.HEIGHT)
@@ -140,15 +175,30 @@ class HeteroMode(BaseMode):
             if keys[pygame.K_s] or keys[pygame.K_DOWN]: player.move(0, 5, self.WIDTH, self.HEIGHT)
 
             # Generar emojis
-            if len(emojis) < MAX_EMOJIS and random.randint(1, 10) == 1: # Ajustar la probabilidad
-                emojis.append(Emoji([random.randint(0, self.WIDTH - 20), 0], self.emoji_image)) # Usar el emoji_image pasado
+            if len(emojis) < MAX_EMOJIS and random.randint(1, 10) == 1:
+                emojis.append(Emoji([random.randint(0, self.WIDTH - 20), 0], self.emoji_image))
+            
+            # Spawn de power-up de ralentización (~0.3% de probabilidad, muy raro)
+            if random.randint(1, 350) == 1 and len(powerups) < 1:
+                powerup_surface = pygame.Surface((30, 30), pygame.SRCALPHA)
+                # Dibujar reloj de arena
+                pygame.draw.polygon(powerup_surface, (100, 200, 255), 
+                                   [(5, 0), (25, 0), (15, 15)])  # Triángulo superior
+                pygame.draw.polygon(powerup_surface, (100, 200, 255), 
+                                   [(5, 30), (25, 30), (15, 15)])  # Triángulo inferior
+                powerups.append({
+                    'x': random.randint(50, self.WIDTH - 50),
+                    'y': -30,
+                    'surface': powerup_surface
+                })
 
-            # Actualizar emojis con velocidad dinámica
-            fall_speed = 2 + (elapsed_time / 10)
+            # Actualizar emojis con velocidad dinámica (afectada por slowdown)
+            base_fall_speed = 2 + (elapsed_time / 10)
+            fall_speed = base_fall_speed * self.slowdown_multiplier
             emojis_to_remove = []
             
             # Color de velocidad basado en el peligro
-            danger_level = min(255, int(fall_speed * 25))
+            danger_level = min(255, int(base_fall_speed * 25))
             speed_color = (danger_level, 255 - danger_level, 0)
 
             # Actualizar emojis
@@ -162,6 +212,23 @@ class HeteroMode(BaseMode):
 
             for emoji in emojis_to_remove:
                 emojis.remove(emoji)
+            
+            # Actualizar power-ups
+            powerups_to_keep = []
+            for powerup in powerups:
+                powerup['y'] += 2.5  # Velocidad fija lenta
+                
+                # Colisión con jugador
+                player_rect = pygame.Rect(player.x, player.y, player.get_size(), player.get_size())
+                powerup_rect = pygame.Rect(powerup['x'], powerup['y'], 30, 30)
+                
+                if player_rect.colliderect(powerup_rect):
+                    self.slowdown_active = True
+                    self.slowdown_end_time = current_time + 4.0  # 4 segundos de efecto completo
+                    self.slowdown_fade_end_time = current_time + 6.0  # + 2 segundos de fade
+                elif powerup['y'] <= self.HEIGHT:
+                    powerups_to_keep.append(powerup)
+            powerups = powerups_to_keep
 
             # Dibujar fondo
             self.draw_background(current_time)
@@ -169,6 +236,30 @@ class HeteroMode(BaseMode):
             player.draw(self.screen)
             for emoji in emojis:
                 emoji.draw(self.screen)
+            
+            # Dibujar power-ups con glow cyan
+            for powerup in powerups:
+                # Glow cyan pulsante
+                glow_intensity = int(abs(math.sin(elapsed_time * 6)) * 80) + 100
+                glow_surface = pygame.Surface((50, 50), pygame.SRCALPHA)
+                pygame.draw.circle(glow_surface, (100, 200, 255, glow_intensity), (25, 25), 20)
+                self.screen.blit(glow_surface, (powerup['x'] - 10, powerup['y'] - 10))
+                self.screen.blit(powerup['surface'], (powerup['x'], powerup['y']))
+            
+            # Indicador de slowdown activo
+            if self.slowdown_active:
+                if current_time <= self.slowdown_end_time:
+                    remaining = self.slowdown_end_time - current_time
+                    slowdown_text = f"SLOW! {remaining:.1f}s"
+                    text_color = (100, 200, 255)
+                else:
+                    slowdown_text = "Normalizando..."
+                    text_color = (150, 180, 200)
+                
+                slowdown_font = pygame.font.Font(None, 28)
+                slowdown_surface = slowdown_font.render(slowdown_text, True, text_color)
+                slowdown_rect = slowdown_surface.get_rect(center=(self.WIDTH // 2, 30))
+                self.screen.blit(slowdown_surface, slowdown_rect)
 
             # HUD mejorado
             # Timer con sombra
@@ -185,6 +276,17 @@ class HeteroMode(BaseMode):
             speed_display = font.render(speed_text, True, speed_color)
             self.screen.blit(speed_shadow, (12, 42))
             self.screen.blit(speed_display, (10, 40))
+            
+            # Logro: Superviviente (30 segundos)
+            if not self.survivor_unlocked and elapsed_time >= 30:
+                self.achievement_manager.unlock("survivor_30")
+                self.survivor_unlocked = True
+            
+            # Notificaciones de logros
+            pending = self.achievement_manager.get_pending_notification()
+            if pending:
+                self.achievement_notification.show(pending)
+            self.achievement_notification.update_and_draw(self.screen, time.time())
 
             pygame.display.flip()
             self.clock.tick(FPS)

@@ -76,6 +76,9 @@ class StarField:
         self.mid_stars = [Star(random.randint(0, width), random.randint(0, height), 2, 1) for _ in range(30)]
         self.front_stars = [Star(random.randint(0, width), random.randint(0, height), 3, 2) for _ in range(20)]
         
+        # Cachear lista combinada de estrellas (evita concatenación cada frame)
+        self.all_stars = self.back_stars + self.mid_stars + self.front_stars
+        
         # Array para múltiples objetos espaciales
         self.space_objects = []
         self.spawn_counter = 0
@@ -116,8 +119,8 @@ class StarField:
                 self.current_types.add(name)
 
     def update(self):
-        # Actualizar estrellas
-        for star in self.back_stars + self.mid_stars + self.front_stars:
+        # Actualizar estrellas (usando lista cacheada)
+        for star in self.all_stars:
             star.update(self.height)
             
         # Actualizar y limpiar objetos espaciales
@@ -141,6 +144,6 @@ class StarField:
         # Dibujar objetos espaciales primero
         for space_obj in self.space_objects:
             space_obj.draw(surface)
-        # Luego las estrellas
-        for star in self.back_stars + self.mid_stars + self.front_stars:
+        # Luego las estrellas (usando lista cacheada)
+        for star in self.all_stars:
             star.draw(surface)

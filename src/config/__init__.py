@@ -7,9 +7,9 @@ import os
 # Configuración de ventana y FPS
 FPS = 60
 
-# Tamaño del menú (más ancho para evitar superposición de textos)
+# Tamaño del menú (más ancho y alto para evitar superposición)
 MENU_WIDTH = 900
-MENU_HEIGHT = 600
+MENU_HEIGHT = 700
 
 # Tamaño fijo de la ventana de juego
 GAME_WIDTH = 600

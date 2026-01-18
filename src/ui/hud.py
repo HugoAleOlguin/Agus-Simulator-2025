@@ -1,10 +1,20 @@
 import pygame
 import time
 
+# Fuente cacheada (se inicializa una vez)
+_font_cache = None
+
+def _get_font():
+    """Obtiene la fuente cacheada, inicializándola si es necesario."""
+    global _font_cache
+    if _font_cache is None:
+        _font_cache = pygame.font.Font(None, 36)
+    return _font_cache
+
 # Función para dibujar el temporizador en tiempo real
 def draw_timer(screen, start_time, x, y):
     elapsed_time = time.time() - start_time
-    font = pygame.font.Font(None, 36)
+    font = _get_font()
     timer_text = font.render(f"Tiempo: {elapsed_time:.1f}s", True, (255, 255, 255))
     
     # Sombra
@@ -44,7 +54,7 @@ draw_peaceful_progress.last_progress = 0
 
 # Función para mostrar la velocidad de caída de los emojis
 def draw_fall_speed(screen, fall_speed, x, y, color=(255, 255, 255)):
-    font = pygame.font.Font(None, 36)
+    font = _get_font()
     speed_text = f"Velocidad: {fall_speed:.2f}"
     
     # Sombra y texto
@@ -56,7 +66,7 @@ def draw_fall_speed(screen, fall_speed, x, y, color=(255, 255, 255)):
 
 # Función para mostrar el contador de emojis atrapados
 def draw_emoji_count(screen, emoji_count, x, y):
-    font = pygame.font.Font(None, 36)
+    font = _get_font()
     text = f"Emojis: {emoji_count}"
     
     # Color basado en la cantidad

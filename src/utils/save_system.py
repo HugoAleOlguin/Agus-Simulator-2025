@@ -1,11 +1,18 @@
 import os
 import json
 
+def get_appdata_dir():
+    """Obtiene el directorio de AppData para el juego."""
+    if os.name == 'nt':  # Windows
+        appdata = os.environ.get('LOCALAPPDATA', os.path.expanduser('~'))
+        save_dir = os.path.join(appdata, 'AgusSimulator')
+    else:  # Linux/Mac
+        save_dir = os.path.expanduser('~/.agussimulator')
+    return save_dir
+
 class SaveSystem:
     def __init__(self):
-        # Usar ruta absoluta desde la raíz del proyecto
-        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        self.save_dir = os.path.join(root_dir, 'data')
+        self.save_dir = get_appdata_dir()
         self.save_path = os.path.join(self.save_dir, 'records.json')
         self._ensure_save_directory()
         self.records = self._load_records()

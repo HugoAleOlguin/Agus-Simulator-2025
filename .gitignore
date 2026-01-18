@@ -8,6 +8,7 @@ env/
 build/
 dist/
 *.spec.bak
+*.spec
 
 # Bytecode de Python
 __pycache__/
@@ -36,6 +37,5 @@ desktop.ini
 .env.local
 config.local.py
 
-# Datos locales del juego (user-specific)
-data/settings.json
-data/custom_skins/
+# Datos locales del juego (user-specific, ahora en AppData)
+data/

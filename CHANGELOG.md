@@ -1,6 +1,36 @@
-# 📋 Changelog - Agus Simulator
+# Changelog - Agus Simulator
 
 Todos los cambios notables de este proyecto están documentados aquí.
+
+---
+
+## [4.0] - 01/2026
+
+### Sistema de Logros
+- 7 logros desbloqueables (6 normales + 1 secreto)
+- Menú de logros accesible con [L] desde el menú principal
+- Navegación con W/S entre logros
+- Notificaciones in-game al desbloquear
+- Logros persistentes entre actualizaciones
+
+### Nuevas Mecánicas
+- **Jesús (Modo Clásico)**: Aparece raramente, reduce tamaño 10-30%
+- **Power-up Slowdown (Modo Hetero)**: Ralentiza emojis temporalmente
+
+### Persistencia en AppData
+- Records, settings y logros ahora en `AppData/Local/AgusSimulator`
+- Los datos sobreviven actualizaciones del ejecutable
+- Limpieza de carpeta `data/` del repositorio
+
+### UI Mejorada
+- Selector de skins con A/D además de flechas
+- Selector de modos con W/S además de flechas
+- Controles en pantalla actualizados
+- Menú de logros con navegación y feedback visual
+
+### Correcciones
+- Flechas Unicode reemplazadas por texto compatible
+- Altura del menú aumentada para evitar superposición
 
 ---
 

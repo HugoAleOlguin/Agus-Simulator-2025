@@ -8,10 +8,14 @@ class Player:
         self.image = None  # Imagen del jugador (se asigna después)
         self.size = 50  # Tamaño inicial del jugador
         self.rect = pygame.Rect(self.x, self.y, self.size, self.size)  # Rectángulo del jugador
+        self._cached_size = 0  # Tamaño de la imagen cacheada
+        self._cached_image = None  # Imagen escalada cacheada
 
     # Asignar una imagen al jugador
     def set_image(self, image):
         self.image = image
+        self._cached_size = 0  # Forzar re-escalado
+        self._cached_image = None
 
     # Mover al jugador dentro de los límites de la ventana
     def move(self, dx, dy, window_width, window_height):
@@ -28,8 +32,11 @@ class Player:
     # Dibujar al jugador en la pantalla
     def draw(self, screen):
         if self.image:  # Si hay una imagen asignada
-            scaled_image = pygame.transform.scale(self.image, (self.size, self.size))  # Escalar la imagen
-            screen.blit(scaled_image, (self.x, self.y))  # Dibujar la imagen
+            # Solo re-escalar si el tamaño cambió
+            if self.size != self._cached_size or self._cached_image is None:
+                self._cached_size = self.size
+                self._cached_image = pygame.transform.scale(self.image, (self.size, self.size))
+            screen.blit(self._cached_image, (self.x, self.y))  # Dibujar la imagen cacheada
         else:  # Si no hay imagen, dibujar un rectángulo rojo
             pygame.draw.rect(screen, (255, 0, 0), self.rect)
 
@@ -48,6 +55,18 @@ class Player:
         self.x = max(0, min(self.x, max_width - self.size))
         self.y = max(0, min(self.y, max_height - self.size))
         
+        self.rect = pygame.Rect(self.x, self.y, self.size, self.size)
+
+    # Reducir el tamaño del jugador (10-30% aleatorio)
+    def shrink(self, min_size=50):
+        import random
+        shrink_percent = random.uniform(0.10, 0.30)  # 10-30% de reducción
+        new_size = int(self.size * (1 - shrink_percent))
+        
+        # No reducir por debajo del tamaño mínimo
+        self.size = max(min_size, new_size)
+        
+        # Actualizar rect
         self.rect = pygame.Rect(self.x, self.y, self.size, self.size)
 
     # Obtener la posición del jugador

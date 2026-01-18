@@ -9,7 +9,7 @@ import math
 import time
 from src.config import FPS, MENU_WIDTH, MENU_HEIGHT, COLORS
 
-GAME_VERSION = "Version 3.5"
+GAME_VERSION = "Version 4.0"
 
 
 def show_classic_tutorial(screen):
@@ -133,7 +133,8 @@ def show_menu(screen):
         "¡Por algo es secreto...!",
         "¿Eh? ¡No me mires así!",
         "Vaya...",
-        "Presiona ← → para cambiar de skin",
+        "JESÚS????",
+        "Presiona L para ver tus logros",
     ]
     current_tip_index = 0
     last_tip_change_time = pygame.time.get_ticks()
@@ -162,6 +163,12 @@ def show_menu(screen):
         exit_text = font_instructions.render("Presiona ESC para salir", True, (255, 255, alpha))
         screen.blit(play_text, play_rect)
         screen.blit(exit_text, exit_rect)
+        
+        # Botón de logros
+        font_logros = pygame.font.Font(None, 32)
+        logros_text = font_logros.render("[L] Logros", True, (200, 180, 100))
+        logros_rect = logros_text.get_rect(center=(MENU_WIDTH // 2, MENU_HEIGHT // 2 + 100))
+        screen.blit(logros_text, logros_rect)
 
         # Tips con fade
         tip_alpha = int(180 + 75 * math.sin(current_time * 2))
@@ -189,6 +196,9 @@ def show_menu(screen):
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     exit()
+                if event.key == pygame.K_l:
+                    from src.ui.achievements_menu import show_achievements_menu
+                    show_achievements_menu(screen, pygame.time.Clock())
     
     return False
 
@@ -259,76 +269,152 @@ def show_mode_selection_menu(screen, skin_manager=None):
         current_time = time.time()
         screen.fill((0, 0, 0))
         
-        # Título
-        title = font.render("Selecciona un modo", True, (255, 255, 255))
+        # Título con sombra y efecto
+        title_pulse = abs(math.sin(current_time * 2)) * 0.2 + 0.8
+        title_color = (int(255 * title_pulse), int(255 * title_pulse), int(255 * title_pulse))
+        title_shadow = font.render("Selecciona un modo", True, (30, 30, 30))
+        title = font.render("Selecciona un modo", True, title_color)
         title_rect = title.get_rect(center=(MENU_WIDTH // 2, 60))
+        screen.blit(title_shadow, (title_rect.x + 3, title_rect.y + 3))
         screen.blit(title, title_rect)
 
-        # Modos de juego
+        # Modos de juego con mejor estilo
         for i, mode in enumerate(available_modes):
-            color = (255, 255, 0) if i == selected else (255, 255, 255)
-            text = small_font.render(modes_info[mode]["title"], True, color)
+            # Efecto de selección
+            if i == selected:
+                # Indicador de selección (flecha)
+                select_arrow = small_font.render("►", True, (255, 220, 0))
+                arrow_offset = int(math.sin(current_time * 5) * 3)
+                screen.blit(select_arrow, (70 + arrow_offset, 130 + i * 70))
+                
+                color = (255, 255, 0)
+                # Fondo sutil para el seleccionado
+                highlight_rect = pygame.Rect(100, 125 + i * 70, MENU_WIDTH - 200, 50)
+                pygame.draw.rect(screen, (40, 40, 20), highlight_rect, border_radius=8)
+            else:
+                color = (180, 180, 180)
+            
+            # Título del modo
+            mode_title = modes_info[mode]["title"]
+            text = small_font.render(mode_title, True, color)
             text_rect = text.get_rect(center=(MENU_WIDTH // 2, 140 + i * 70))
+            
+            # Sombra
+            if i == selected:
+                shadow = small_font.render(mode_title, True, (50, 50, 0))
+                screen.blit(shadow, (text_rect.x + 2, text_rect.y + 2))
             screen.blit(text, text_rect)
 
             # Descripción
-            desc = desc_font.render(modes_info[mode]["desc"], True, (200, 200, 200))
-            desc_rect = desc.get_rect(center=(MENU_WIDTH // 2, 140 + i * 70 + 25))
+            desc_color = (220, 220, 220) if i == selected else (120, 120, 120)
+            desc = desc_font.render(modes_info[mode]["desc"], True, desc_color)
+            desc_rect = desc.get_rect(center=(MENU_WIDTH // 2, 140 + i * 70 + 28))
             screen.blit(desc, desc_rect)
 
-        # === SELECTOR DE SKINS ===
-        skin_section_y = 430
+        # === SELECTOR DE SKINS MEJORADO ===
+        skin_section_y = 480
         
-        # Línea separadora
-        pygame.draw.line(screen, (60, 60, 60), (50, skin_section_y - 30), (MENU_WIDTH - 50, skin_section_y - 30), 2)
+        # Línea separadora con gradiente
+        for i in range(3):
+            alpha = 80 - i * 20
+            pygame.draw.line(screen, (alpha, alpha, alpha), 
+                           (100, skin_section_y - 35 + i), 
+                           (MENU_WIDTH - 100, skin_section_y - 35 + i), 1)
         
-        # Título de skins
-        skin_title = skin_font.render("Skin del jugador", True, (200, 200, 200))
+        # Título de skins con sombra e indicador de controles
+        skin_title = skin_font.render("<  Skin del jugador  >", True, (255, 255, 255))
+        skin_title_shadow = skin_font.render("<  Skin del jugador  >", True, (50, 50, 50))
         skin_title_rect = skin_title.get_rect(center=(MENU_WIDTH // 2, skin_section_y))
+        screen.blit(skin_title_shadow, (skin_title_rect.x + 2, skin_title_rect.y + 2))
         screen.blit(skin_title, skin_title_rect)
         
         if skins:
-            # Dibujar flechas
-            arrow_font = pygame.font.Font(None, 50)
-            arrow_color = (255, 255, 0) if int(current_time * 3) % 2 == 0 else (200, 200, 0)
+            preview_y = skin_section_y + 70
+            center_x = MENU_WIDTH // 2
             
-            left_arrow = arrow_font.render("◄", True, arrow_color)
-            left_rect = left_arrow.get_rect(center=(MENU_WIDTH // 2 - 100, skin_section_y + 55))
-            screen.blit(left_arrow, left_rect)
+            # Posiciones para carrusel de 3 items
+            positions = [
+                (center_x - 130, 50, 0.5),   # Izquierda (pequeño)
+                (center_x, 100, 1.0),         # Centro (grande)
+                (center_x + 130, 50, 0.5),   # Derecha (pequeño)
+            ]
             
-            right_arrow = arrow_font.render("►", True, arrow_color)
-            right_rect = right_arrow.get_rect(center=(MENU_WIDTH // 2 + 100, skin_section_y + 55))
-            screen.blit(right_arrow, right_rect)
+            # Índices para mostrar (anterior, actual, siguiente)
+            indices = [
+                (current_skin_index - 1) % len(skins),
+                current_skin_index,
+                (current_skin_index + 1) % len(skins)
+            ]
             
-            # Preview de la skin actual
-            current_skin = skins[current_skin_index]
-            preview = skin_previews.get(current_skin['filename'])
-            if preview:
-                preview_rect = preview.get_rect(center=(MENU_WIDTH // 2, skin_section_y + 55))
-                # Borde del preview
-                border_rect = preview_rect.inflate(6, 6)
-                pygame.draw.rect(screen, (255, 255, 0), border_rect, 2, border_radius=5)
-                screen.blit(preview, preview_rect)
+            # Dibujar las 3 skins del carrusel
+            for i, (pos_x, size, scale) in enumerate(positions):
+                skin_idx = indices[i]
+                skin = skins[skin_idx]
+                preview = skin_previews.get(skin['filename'])
+                
+                if preview:
+                    # Escalar según posición
+                    scaled_size = int(size * scale)
+                    scaled_preview = pygame.transform.smoothscale(preview, (scaled_size, scaled_size))
+                    preview_rect = scaled_preview.get_rect(center=(pos_x, preview_y))
+                    
+                    if i == 1:  # Skin central (seleccionada)
+                        # Borde brillante simple (sin cuadrados múltiples)
+                        glow_intensity = int(abs(math.sin(current_time * 3)) * 55) + 200
+                        border_color = (glow_intensity, int(glow_intensity * 0.85), 0)
+                        pygame.draw.rect(screen, border_color, preview_rect.inflate(8, 8), 
+                                       border_radius=6, width=3)
+                    else:
+                        # Borde sutil para los laterales + opacidad
+                        pygame.draw.rect(screen, (60, 60, 60), preview_rect.inflate(4, 4), 
+                                       border_radius=4, width=1)
+                    
+                    screen.blit(scaled_preview, preview_rect)
             
             # Nombre de la skin
-            skin_name = current_skin['name']
+            name_font = pygame.font.Font(None, 34)
+            current_skin = skins[current_skin_index]
+            skin_name = current_skin['name'].upper()
             if current_skin['is_custom']:
                 skin_name += " ★"
-            name_text = skin_font.render(skin_name, True, (255, 255, 255))
-            name_rect = name_text.get_rect(center=(MENU_WIDTH // 2, skin_section_y + 110))
+            
+            name_shadow = name_font.render(skin_name, True, (30, 30, 30))
+            name_text = name_font.render(skin_name, True, (255, 255, 255))
+            name_rect = name_text.get_rect(center=(MENU_WIDTH // 2, preview_y + 70))
+            screen.blit(name_shadow, (name_rect.x + 2, name_rect.y + 2))
             screen.blit(name_text, name_rect)
             
-            # Indicador de posición
-            indicator_text = f"{current_skin_index + 1}/{len(skins)}"
-            indicator = skin_font.render(indicator_text, True, (150, 150, 150))
-            indicator_rect = indicator.get_rect(center=(MENU_WIDTH // 2, skin_section_y + 135))
-            screen.blit(indicator, indicator_rect)
+            # Indicador de posición (puntos)
+            indicator_y = preview_y + 95
+            dot_spacing = 15
+            total_dots_width = len(skins) * dot_spacing
+            start_x = center_x - total_dots_width // 2
+            
+            for i in range(len(skins)):
+                dot_x = start_x + i * dot_spacing + 5
+                if i == current_skin_index:
+                    pygame.draw.circle(screen, (255, 220, 0), (dot_x, indicator_y), 5)
+                else:
+                    pygame.draw.circle(screen, (80, 80, 80), (dot_x, indicator_y), 3)
         
-        # Instrucciones
-        instructions_y = MENU_HEIGHT - 25
+        # === GUÍA DE CONTROLES ===
+        controls_y = MENU_HEIGHT - 60
+        controls_font = pygame.font.Font(None, 26)
+        
+        # Guía de modos (izquierda)
+        modes_guide = controls_font.render("[W/S]  Seleccionar modo", True, (150, 150, 150))
+        screen.blit(modes_guide, (80, controls_y))
+        
+        # Guía de skins (derecha)
+        skins_guide = controls_font.render("[A/D]  Cambiar skin", True, (150, 150, 150))
+        skins_guide_rect = skins_guide.get_rect(right=MENU_WIDTH - 80, top=controls_y)
+        screen.blit(skins_guide, skins_guide_rect)
+        
+        # Instrucciones principales
+        instructions_y = MENU_HEIGHT - 30
         inst_font = pygame.font.Font(None, 28)
         inst_text = "I Importar foto   ENTER Jugar   ESC Volver"
-        inst_surface = inst_font.render(inst_text, True, (120, 120, 120))
+        inst_surface = inst_font.render(inst_text, True, (100, 100, 100))
         inst_rect = inst_surface.get_rect(center=(MENU_WIDTH // 2, instructions_y))
         screen.blit(inst_surface, inst_rect)
 
@@ -340,15 +426,15 @@ def show_mode_selection_menu(screen, skin_manager=None):
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
+                if event.key == pygame.K_UP or event.key == pygame.K_w:
                     selected = (selected - 1) % len(available_modes)
-                elif event.key == pygame.K_DOWN:
+                elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
                     selected = (selected + 1) % len(available_modes)
-                elif event.key == pygame.K_LEFT and skins:
+                elif (event.key == pygame.K_LEFT or event.key == pygame.K_a) and skins:
                     # Cambiar skin hacia la izquierda
                     current_skin_index = (current_skin_index - 1) % len(skins)
                     skin_manager.save_selected_skin(skins[current_skin_index]['filename'])
-                elif event.key == pygame.K_RIGHT and skins:
+                elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and skins:
                     # Cambiar skin hacia la derecha
                     current_skin_index = (current_skin_index + 1) % len(skins)
                     skin_manager.save_selected_skin(skins[current_skin_index]['filename'])

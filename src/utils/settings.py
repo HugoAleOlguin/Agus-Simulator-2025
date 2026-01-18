@@ -1,20 +1,25 @@
 """
 Sistema de configuración del juego.
-Maneja opciones como volumen con persistencia.
+Maneja opciones como volumen con persistencia en AppData.
 """
 import os
 import json
 import pygame
 
 
+def get_appdata_dir():
+    """Obtiene el directorio de AppData para el juego."""
+    if os.name == 'nt':  # Windows
+        appdata = os.environ.get('LOCALAPPDATA', os.path.expanduser('~'))
+        save_dir = os.path.join(appdata, 'AgusSimulator')
+    else:  # Linux/Mac
+        save_dir = os.path.expanduser('~/.agussimulator')
+    return save_dir
+
+
 def get_settings_path():
     """Obtiene la ruta del archivo de configuración."""
-    import sys
-    if getattr(sys, 'frozen', False):
-        base = os.path.dirname(sys.executable)
-    else:
-        base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    return os.path.join(base, 'data', 'settings.json')
+    return os.path.join(get_appdata_dir(), 'settings.json')
 
 
 class Settings:

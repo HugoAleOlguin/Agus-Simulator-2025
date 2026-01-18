@@ -9,6 +9,7 @@ from src.ui.hud import draw_timer, draw_emoji_count, draw_peaceful_progress, dra
 from src.ui.pause_menu import show_pause_menu, show_options_menu
 from src.utils import load_image, load_gif_frames, load_audio
 from src.utils.settings import get_settings
+from src.utils.achievements import get_achievement_manager, AchievementNotification
 from src.config import FPS
 from src.modes.base_mode import BaseMode
 
@@ -40,9 +41,18 @@ class ClassicMode(BaseMode):
             backup_frame.fill((0, 255, 0))
             self.victory_frames = [backup_frame]
         
+        # Cargar imagen de Jesús (reduce tamaño del jugador)
+        self.jesus_image = load_image('jesus_christ.png')
+        if self.jesus_image:
+            self.jesus_image = self.jesus_image.convert_alpha()
+        
         self.secret_unlocked = False
         self.font_small = pygame.font.Font(None, 32)
         self.font = pygame.font.Font(None, 36)
+        
+        # Sistema de logros
+        self.achievement_manager = get_achievement_manager()
+        self.achievement_notification = AchievementNotification(WIDTH, HEIGHT)
 
     def check_endings(self, player, last_catch_time, start_time):
         current_time = time.time()
@@ -53,7 +63,11 @@ class ClassicMode(BaseMode):
             
         # Victoria por tamaño
         if player.get_size() >= self.HEIGHT * 1.0:
+            # Logro: Gigante
+            self.achievement_manager.unlock("giant")
             if self.secret_unlocked:
+                # Logro: Final secreto
+                self.achievement_manager.unlock("secret_ending")
                 self.show_secret_ending(current_time - start_time)
             else:
                 self.show_victory_ending(current_time - start_time)
@@ -61,7 +75,10 @@ class ClassicMode(BaseMode):
             
         # Final de esquivar
         if current_time - last_catch_time >= 60.0:
+            # Logro: Pacifista
+            self.achievement_manager.unlock("pacifist")
             if self.secret_unlocked:
+                self.achievement_manager.unlock("secret_ending")
                 self.show_secret_ending(current_time - start_time)
             else:
                 self.show_dodge_ending(current_time - start_time)
@@ -226,6 +243,7 @@ class ClassicMode(BaseMode):
         last_emoji_catch_time = start_time
         emoji_count = 0
         emojis = []
+        jesus_emojis = []  # Lista separada para emojis de Jesús
         player = Player(self.WIDTH // 2, self.HEIGHT - 100)
         player.set_image(self.player_image)
         running = True
@@ -278,18 +296,38 @@ class ClassicMode(BaseMode):
             spawn_chance = max(2, 30 - int(elapsed_time // 10))
             if len(emojis) < MAX_EMOJIS and random.randint(1, spawn_chance) == 1:
                 emojis.append(Emoji([random.randint(0, self.WIDTH - 20), -30], self.emoji_image))
+                
+                # Spawn de Jesús (~1% de probabilidad cuando spawnea un emoji normal)
+                if self.jesus_image and random.randint(1, 100) == 1:
+                    jesus_emojis.append(Emoji([random.randint(0, self.WIDTH - 40), -50], self.jesus_image))
 
-            # Actualizar emojis
+            # Actualizar emojis normales
             fall_speed = 2 + (elapsed_time / 10)
-            for emoji in emojis[:]:
+            emojis_to_keep = []
+            for emoji in emojis:
                 emoji.fall(fall_speed)
                 if emoji.isCaught(player.get_position(), player.get_size()):
                     player.grow(self.WIDTH, self.HEIGHT)
-                    emojis.remove(emoji)
                     last_emoji_catch_time = time.time()
                     emoji_count += 1
-                elif emoji.position[1] > self.HEIGHT:
-                    emojis.remove(emoji)
+                    # Logro: Primera sangre
+                    if emoji_count == 1:
+                        self.achievement_manager.unlock("first_blood")
+                elif emoji.position[1] <= self.HEIGHT:
+                    emojis_to_keep.append(emoji)
+            emojis = emojis_to_keep
+            
+            # Actualizar emojis de Jesús (velocidad FIJA, no aumenta con el tiempo)
+            jesus_to_keep = []
+            for jesus in jesus_emojis:
+                jesus.fall(2.5)  # Velocidad fija, no aumenta con el tiempo
+                if jesus.isCaught(player.get_position(), player.get_size()):
+                    player.shrink()  # Reduce tamaño 10-30%
+                    # Logro: Encuentro Divino
+                    self.achievement_manager.unlock("jesus_encounter")
+                elif jesus.position[1] <= self.HEIGHT:
+                    jesus_to_keep.append(jesus)
+            jesus_emojis = jesus_to_keep
 
             # Render optimizado
             self.screen.fill((160, 160, 160))
@@ -298,6 +336,18 @@ class ClassicMode(BaseMode):
             player.draw(self.screen)
             for emoji in emojis:
                 emoji.draw(self.screen)
+            
+            # Renderizar Jesús con glow amarillo
+            for jesus in jesus_emojis:
+                # Glow amarillo pulsante
+                glow_size = int(jesus.size) + 10
+                glow_intensity = int(abs(math.sin(elapsed_time * 5)) * 100) + 100
+                glow_surface = pygame.Surface((glow_size + 20, glow_size + 20), pygame.SRCALPHA)
+                pygame.draw.circle(glow_surface, (255, 220, 0, glow_intensity), 
+                                 (glow_size // 2 + 10, glow_size // 2 + 10), glow_size // 2 + 5)
+                self.screen.blit(glow_surface, 
+                               (int(jesus.position[0]) - 10, int(jesus.position[1]) - 10))
+                jesus.draw(self.screen)
 
             # HUD optimizado
             self.screen.blit(self.hud_surface, (0, 0))
@@ -327,6 +377,12 @@ class ClassicMode(BaseMode):
                 text = self.font.render("bro...", True, secret_color)
                 text_rect = text.get_rect(center=(self.WIDTH // 2, 25))
                 self.screen.blit(text, text_rect)
+
+            # Notificaciones de logros
+            pending = self.achievement_manager.get_pending_notification()
+            if pending:
+                self.achievement_notification.show(pending)
+            self.achievement_notification.update_and_draw(self.screen, time.time())
 
             pygame.display.flip()
             clock.tick(FPS)

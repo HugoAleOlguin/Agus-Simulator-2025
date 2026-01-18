@@ -9,6 +9,7 @@ from src.utils.save_system import SaveSystem
 from src.entities.player import Player
 from src.entities.emoji import Emoji
 from src.utils import load_image, load_music
+from src.utils.achievements import get_achievement_manager, AchievementNotification
 from src.ui.pause_menu import show_pause_menu, show_options_menu
 from src.ui.visual_effects import FPSCounter, ParticleSystem, Transition
 from src.effects.starfield import StarField
@@ -50,6 +51,18 @@ class InfiniteMode(BaseMode):
         self.font = pygame.font.Font(None, 35)
         self.font_big = pygame.font.Font(None, 74)
         self.font_small = pygame.font.Font(None, 36)
+        
+        # Pre-escalar corazón del HUD (siempre es 40x40)
+        self.hud_heart = pygame.transform.scale(self.heart_image, (40, 40))
+        
+        # Pre-crear superficie de daño (reutilizable)
+        self.hurt_surface = pygame.Surface((WIDTH, HEIGHT))
+        self.hurt_surface.fill((255, 0, 0))
+        
+        # Sistema de logros
+        self.achievement_manager = get_achievement_manager()
+        self.achievement_notification = AchievementNotification(WIDTH, HEIGHT)
+        self.infinite_master_unlocked = False
 
     def create_particles(self, x, y, color, count=20):
         """Crea partículas usando el sistema mejorado."""
@@ -78,12 +91,11 @@ class InfiniteMode(BaseMode):
         text = self.font.render(record_text, True, (255, 215, 0))
         self.screen.blit(text, (20, 50))
         
-        # Panel central - Vidas
+        # Panel central - Vidas (usando corazón pre-escalado)
         heart_size = 40
         heart_x = (self.WIDTH - (heart_size * 3 + 20)) // 2
         for i in range(self.lives):
-            scaled_heart = pygame.transform.scale(self.heart_image, (heart_size, heart_size))
-            self.screen.blit(scaled_heart, (heart_x + i * (heart_size + 10), 20))
+            self.screen.blit(self.hud_heart, (heart_x + i * (heart_size + 10), 20))
         
         # Panel derecho - Velocidad y dificultad
         velocity = 2 + (current_time/20)  # Aumenta más rápido
@@ -231,14 +243,12 @@ class InfiniteMode(BaseMode):
                 if keys[pygame.K_w] or keys[pygame.K_UP]: self.player.move(0, -5, self.WIDTH, self.HEIGHT)
                 if keys[pygame.K_s] or keys[pygame.K_DOWN]: self.player.move(0, 5, self.WIDTH, self.HEIGHT)
                 
-                # Actualizar efecto de daño
+                # Actualizar efecto de daño (usando superficie pre-creada)
                 if self.hurt_effect > 0:
                     self.hurt_effect = max(0, self.hurt_effect - dt)
                     if self.hurt_effect > 0:
-                        hurt_surface = pygame.Surface((self.WIDTH, self.HEIGHT))
-                        hurt_surface.fill((255, 0, 0))
-                        hurt_surface.set_alpha(int(100 * self.hurt_effect))
-                        self.screen.blit(hurt_surface, (0, 0))
+                        self.hurt_surface.set_alpha(int(100 * self.hurt_effect))
+                        self.screen.blit(self.hurt_surface, (0, 0))
 
                 # Spawn emoji con dificultad aumentada
                 spawn_chance = max(20, 60 - int(current_time / 1))
@@ -254,39 +264,52 @@ class InfiniteMode(BaseMode):
                     self.hearts.append(heart)
                 
                 # Update emojis con velocidad aumentada
-                for emoji in self.emojis[:]:
-                    emoji.fall(2 + current_time/20)  # Más rápido que antes
+                emojis_to_keep = []
+                game_over = False
+                for emoji in self.emojis:
+                    emoji.fall(2 + current_time/20)
                     if emoji.position[1] > self.HEIGHT:
-                        self.emojis.remove(emoji)
+                        continue  # No mantener
                     elif emoji.isCaught(self.player.get_position(), self.player.get_size()):
                         self.lives -= 1
-                        self.hurt_effect = 1.0  # Iniciar efecto de daño
+                        self.hurt_effect = 1.0
                         self.create_particles(
                             self.player.x + self.player.get_size()//2,
                             self.player.y + self.player.get_size()//2,
                             (255, 0, 0)
                         )
-                        self.emojis.remove(emoji)
                         if self.lives <= 0:
                             self.save_system.save_record('infinite_mode', current_time)
                             if self.show_game_over(current_time):
-                                self.reset_game()  # Reiniciar desde game over
-                                continue
-                            running = False  # Volver al menú si presiona ESC
+                                self.reset_game()
+                                game_over = True
+                                break
+                            running = False
+                            game_over = True
+                            break
+                    else:
+                        emojis_to_keep.append(emoji)
+                
+                if game_over:
+                    continue
+                self.emojis = emojis_to_keep
                 
                 # Update corazones (velocidad constante)
-                for heart in self.hearts[:]:
-                    heart.fall(2)  # Velocidad constante
+                hearts_to_keep = []
+                for heart in self.hearts:
+                    heart.fall(2)
                     if heart.position[1] > self.HEIGHT:
-                        self.hearts.remove(heart)
+                        continue
                     elif heart.isCaught(self.player.get_position(), self.player.get_size()):
-                        self.lives = min(self.lives + 1, 3)  # Máximo 3 vidas
+                        self.lives = min(self.lives + 1, 3)
                         self.create_particles(
                             self.player.x + self.player.get_size()//2,
                             self.player.y + self.player.get_size()//2,
                             (255, 192, 203)
                         )
-                        self.hearts.remove(heart)
+                    else:
+                        hearts_to_keep.append(heart)
+                self.hearts = hearts_to_keep
                 
                 # Draw
                 self.screen.fill((0, 0, 0))
@@ -308,6 +331,17 @@ class InfiniteMode(BaseMode):
                 # Transición
                 self.transition.update()
                 self.transition.draw(self.screen)
+                
+                # Logro: Maestro Infinito (60 segundos)
+                if not self.infinite_master_unlocked and current_time >= 60:
+                    self.achievement_manager.unlock("infinite_master")
+                    self.infinite_master_unlocked = True
+                
+                # Notificaciones de logros
+                pending = self.achievement_manager.get_pending_notification()
+                if pending:
+                    self.achievement_notification.show(pending)
+                self.achievement_notification.update_and_draw(self.screen, time.time())
                 
                 pygame.display.flip()
         except Exception as e:
