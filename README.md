@@ -1,4 +1,4 @@
-# 🎮 Agus Simulator 2025
+# Agus Simulator 2025
 
 Un juego arcade desarrollado en Python con Pygame donde debes atrapar (o esquivar) emojis para descubrir diferentes finales.
 
@@ -8,7 +8,7 @@ Un juego arcade desarrollado en Python con Pygame donde debes atrapar (o esquiva
 
 ---
 
-## 🚀 Instalación
+## Instalación
 
 ### Requisitos
 - Python 3.x (agregado al PATH del sistema)
@@ -28,7 +28,7 @@ Ejecuta `Desinstalar.bat` para eliminar pygame y limpiar dependencias.
 
 ---
 
-## 🎯 Cómo Jugar
+## Cómo Jugar
 
 | Tecla | Acción |
 |-------|--------|
@@ -41,33 +41,33 @@ Ejecuta `Desinstalar.bat` para eliminar pygame y limpiar dependencias.
 
 ---
 
-## 🕹️ Modos de Juego
+## Modos de Juego
 
-### 🏆 Modo Clásico
+### Modo Clásico
 Atrapa emojis para crecer o esquívalos durante 30 segundos para el final pacífico.
 
-### ♾️ Modo Infinito
+### Modo Infinito
 - 3 vidas con corazones
 - Fondo espacial dinámico con estrellas y planetas
 - Dificultad progresiva
 - Sistema de récords persistente
 
-### 🌈 Modo Hetero
+### Modo Hetero
 Modo especial con sistema de cancelación instantánea.
 
 ---
 
-## 🏁 Finales
+## Finales
 
 | Final | Cómo desbloquearlo |
 |-------|-------------------|
-| 🎉 **Victoria** | Atrapa suficientes emojis |
-| 🕊️ **Pacífico** | Esquiva emojis por 30 segundos |
-| 🔮 **Secreto** | ¿Podrás descubrirlo? |
+| **Victoria** | Atrapa suficientes emojis |
+| **Pacífico** | Esquiva emojis por 60 segundos |
+| **Secreto** | ¿Podrás descubrirlo? |
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 Agus-Simulator-2025/
@@ -92,26 +92,26 @@ Agus-Simulator-2025/
 
 ---
 
-## 📋 Changelog
+## Changelog
 
 Ver [CHANGELOG.md](CHANGELOG.md) para el historial completo de versiones.
 
-**Última versión: 3.0** - Modo Infinito, efectos de partículas, sistema de récords y más.
+**Última versión: 4.0**
 
 ---
 
-## 🔮 Próximas Mejoras
+## Próximas Mejoras
 
 - [ ] Modo multijugador local
-- [ ] Nuevos tipos de emojis
-- [ ] Sistema de logros
+- [x] Nuevos tipos de emojis
+- [x] Sistema de logros
 - [ ] Más efectos visuales
 
 ---
 
-## 📝 Licencia
+## Licencia
 
-Este proyecto es de código abierto. ¡Diviértete jugando! 🎮
+Este proyecto es de código abierto.
 
 ---
 
