@@ -40,7 +40,6 @@ a = Analysis(
     binaries=[],
     datas=[
         (os.path.join('src', 'assets'), 'src/assets'),
-        (os.path.join('data', 'records.json'), 'data'),
         (os.path.join('src', 'config'), 'src/config'),
         (os.path.join('src', 'utils'), 'src/utils'),
         (os.path.join('src', 'entities'), 'src/entities'),
